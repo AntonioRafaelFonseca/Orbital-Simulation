@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Orbital Simulation</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js"></script>
+
+  </head>
+
+  <body>
+    <div id="code-explanation">
+      <h1>Orbital Simulation</h1>
+      <h2>In p5.js</h2>
+      <h3>Made by a human</h3>
+      
+      <div class="desc">
+        This project presents a simple N-body simulation built using p5.js, where multiple objects move and interact through a gravitational-like force in a two-dimensional space.
+      </div>
+
+      <div class="text">
+        A main body simulating the sun is placed in the center of the scene and acts as a central moving object.
+      </div>
+
+      <div class="code">
+setup(){
+  MainBody = new ObjectWithG(width/2, height/2, 8, 0, 0, color(0, 0, 0));
+}     
+      </div>
+      
+      <div class="text">
+        Around it (still in the setup function), many smaller bodies are randomly distributed, each with its own position and initial velocity.
+      </div>
+
+      <div class="code">
+for (var i = 0; i &lt; NumberOFBodies; i++){
+  bodies.push(new ObjectWithG(random(50, width-50), random(50, height-50), 4, random(-2, 2), random(-2, 2)));
+}
+      </div>
+
+      <div class="text">
+        During the simulation, all bodies are updated continuously.
+      </div>
+
+      <div class="code">
+for(var i = 0; i &lt; NumberOFBodies; i++){
+  bodies[i].getForce(MainBody, G);
+  bodies[i].update();
+  bodies[i].show();
+}
+      </div>
+
+      <div class="text">
+        The smaller bodies are attracted toward the main body through a gravitational force calculated in a method of the class ObjectWithG.
+      </div>
+
+      <div class="code">  
+getForce(other, G){     //other is another object
+
+  let dir = p5.Vector.sub(other.Vect, this.Vect);  //direction of the Vector
+
+  let distance = dir.mag();  
+  //magnitude = size of the Vector    ----->.mag()    &gt;    -->.mag() 
+
+  distance = constrain(distance, 1, 15);
+    //so that if an object comes too close to the main Object its speed doesn't get too big 
+  
+  let forceMag = G * ((this.mass * other.mass) / (distance * distance));  //Newton's formula
+  
+  dir.normalize();
+  dir.mult(forceMag);
+
+  let acc = p5.Vector.div(dir, this.mass);
+  this.acc.add(acc);
+}   
+      </div>
+
+      <div class="text">
+        That force depends on their mass and distance according to Newton's universal law of gravitation:
+      </div>
+
+      <img src="https://latex.codecogs.com/svg.image?\huge&space;&space;Force=\frac{Mass1 * Mass2}{DistanceBetweenCenters^2} * ConstantOfGravity" alt="Formula">
+
+      <div class="text">
+        To improve numerical stability and smoothness, the simulation is calculated in multiple substeps per frame:
+      </div>
+
+      <div class="code">
+let substeps = 30
+for (let iter = 0; iter &lt; substeps; iter++){
+  //repeats this code 30 times per frame
+}
+      </div>
+    </div>
+
+    <div id="class-explanation">
+      <div id="title">
+        <h2>
+
+Class Explanation</h2>
+      </div>
+
+      <h4>Constructor method</h4>
+      <div id="constructor-method">
+        <div class="text">
+          The radius of the body is defined during initialization.
+          this.Vect is the vector that represents the position of the body, and its x and y coordinates are also set during initialization.
+          The mass is calculated by dividing the body's radius by ten.
+          this.acc is a vector that is added to this.vel, which is then added to this.Vect, therefore changing the body's position.
+        </div>
+
+        <div class="code">
+constructor(x, y, r, vx=0, vy=0, c = undefined){
+
+  if (c !== undefined){
+      this.c = color(0, 0, 0)
+  }
+  else{
+    this.c = color(100, 255, 100)
+  }
+
+  this.radius = r;
+  this.Vect = createVector(x, y);
+  this.mass = this.radius/10;
+  this.acc = createVector(0, 0);
+  this.vel = createVector(vx, vy);
+}
+        </div>
+      </div>
+
+      <h4>Get Force method</h4>
+      <div id="get-force">
+        <div class="text">
+          To calculate the force that a body is experiencing we use Vectors:
+        </div>
+        <div class="code">
+let dir = p5.Vector.sub(other.Vect, this.Vect);
+let acc = p5.Vector.div(dir, this.mass);
+        </div>
+
+        <div class="text">
+          When we normalize the direction vector we transform the vector's length (magnitude) to 1 so we turn it into the force Vector:
+        </div>
+        <div class="code">
+dir.normalize();    //mag = 1
+dir.mult(forceMag);   //mag = 1*forceMag
+        </div>
+
+        <div class="text">
+          The last step to calculate the force is to turn the force into acceleration:
+        </div>
+        <div class="code">
+let acc = p5.Vector.div(dir, this.mass);    // a = F/Mass    Newton's second law
+this.acc.add(acc);
+        </div>
+
+        <div class="text">Full method:</div>
+        <div class="code">
+getForce(other, G){
+
+  let dir = p5.Vector.sub(other.Vect, this.Vect);
+
+  let distance = dir.mag();
+  distance = constrain(distance, 15, 30);
+  
+  let forceMag = G * ((this.mass * other.mass) / (distance * distance));     //Newton's formula
+  
+  dir.normalize();
+  dir.mult(forceMag);
+
+  let acc = p5.Vector.div(dir, this.mass);    //a = F/Mass
+  this.acc.add(acc);
+}
+        </div>
+      </div>
+
+      <h4>Update and Show methods</h4>
+      <div id="update-and-show">
+        <div class="text">
+          The update method applies Forces in this order: Force → acceleration → velocity → Position
+        </div>
+        <div class="code">
+update(){
+  this.vel.add(this.acc)
+  this.Vect.add(this.vel)
+  this.acc.mult(0)
+}
+        </div>
+        <div class="text">
+          The show method simply draws a circle with a blue outline
+        </div>
+        <div class="code">
+show(){
+  stroke(0, 0, 200)
+  strokeWeight(1)
+  fill(this.c)
+  circle(this.Vect.x, this.Vect.y, this.radius*2)
+}
+        </div>
+      </div>
+
+      <h4>Detect Collisions</h4>
+      <div id="detect-collision">
+        <div class="text">
+          The final method of this class, detectCollision, checks if the distance between two bodies is smaller than the sum of their radius by creating a vector between the two, checking the vector's magnitude and returning true if the distance is smaller than the sum of their radius.
+        </div>
+        <div class="code">
+detectCollision(other){
+  if(p5.Vector.sub(other.Vect, this.Vect).mag() &lt; this.radius + other.radius){
+      return true
+  }
+  return false
+}
+        </div>
+      </div>
+
+      <h4>Full Class</h4>
+      <div class="code">
+class ObjectWithG{
+  
+  constructor(x, y, r, vx=0, vy=0, c = undefined){
+
+    if (c !== undefined){
+        this.c = color(0, 0, 0)
+    }
+    else{
+      this.c = color(100, 255, 100)
+    }
+    this.radius = r;
+    this.Vect = createVector(x, y);
+    this.mass = this.radius/10;
+    this.acc = createVector(0, 0);
+    this.vel = createVector(vx, vy);
+      
+  }
+
+  getForce(other, G){
+
+    let dir = p5.Vector.sub(other.Vect, this.Vect);
+
+    let distance = dir.mag();
+    distance = constrain(distance, 15, 30);
+    
+    let forceMag = G * ((this.mass * other.mass) / (distance * distance));
+    
+    dir.normalize();
+    dir.mult(forceMag);
+
+    let acc = p5.Vector.div(dir, this.mass);
+    this.acc.add(acc);
+
+  }
+
+  update(){
+    this.vel.add(this.acc)
+    this.Vect.add(this.vel)
+    
+    this.acc.mult(0)
+  }
+  
+  show(){
+    stroke(0, 0, 200)
+    strokeWeight(1)
+    fill(this.c)
+    circle(this.Vect.x, this.Vect.y, this.radius*2)
+  }
+
+  detectCollision(other){
+      if(p5.Vector.sub(other.Vect, this.Vect).mag() &lt; this.radius + other.radius){
+          return true
+      }
+      return false
+  }
+}
+      </div>
+
+      <h4>Full Code</h4>
+      <div class="code">
+function setup() {
+  createCanvas(min(windowWidth, windowHeight)-3, min(windowWidth, windowHeight)-3);
+  MainBody = new ObjectWithG(width/2, height/2, 8, 0, 0, color(0, 0, 0));
+  substeps = 3
+  G = 2/substeps
+  NumberOFBodies = 5
+  print(NumberOFBodies)
+  bodies = []
+  for (var i = 0; i &lt; NumberOFBodies; i++){
+    bodies.push(new ObjectWithG(random(50, width), random(50, height-50), 6, random(-1, 1), random(-1, 1)))
+  }
+}
+
+function draw() {
+  for (let iter = 0; iter &lt; substeps; iter++){
+    background(255, 10)
+    
+    MainBody.show(color(255, 0, 0));
+
+    for(var i = 0; i &lt; NumberOFBodies; i++){
+
+      if (bodies[i] !== undefined){
+        bodies[i].getForce(MainBody, G)
+        bodies[i].update()
+        bodies[i].show()
+        
+        if(bodies[i].detectCollision(MainBody)){
+          background(0, 255, 255)
+          bodies[i] = undefined
+        }
+      }
+    }
+  }
+}
+      </div>
+      
+      </div>
+    </div>
+    
+    <div id="inputs" class="inputContainer">
+      
+      
+      <div class="slider">      
+        <label for="numBodies">Select Number OF Bodies</label>
+        <input type="range" id="numBodies" min="1" max="10" value="5">
+        <span id="numValue">5</span>
+        
+      </div>
+      <div>
+        <label for="border">Leave Trace</label>
+        <input type="checkbox" id="border" checked>
+      </div>
+      <button id="hello">Refresh</button>
+      <div id="canvas-container"></div>
+    </div>
+    
+
+    <h2>
+      By tracing out the body's position you can get cool patterns
+    </h2>
+
+    <div id="imgs" class="imgContainer">
+      <img src="imgs/pattern1.png" alt="img1">
+      <img src="imgs/pattern2.png" alt="img2">
+    </div>
+
+
+    <div id="references">
+      <h2>
+        References:</h2>
+        <a href="https://en.wikipedia.org/wiki/Newton%27s_law_of_universal_gravitation">Newton's Law of Gravitation (Wikipedia)</a>
+        <a href="https://www.youtube.com/watch?v=EpgB3cNhKPM">Gravitational Attraction (The Coding Train)</a>
+        <a href="https://science.nasa.gov/learn/basics-of-space-flight/chapter3-3/">NASA: Basics of Space Flight</a>
+        <a href="https://www.3blue1brown.com/lessons/vectors">3Blue1Brown: Vectors Explained</a>
+        <a href="https://www.youtube.com/watch?v=fNk_zzaMoSs&t=3s">3Blue1Brown Video: Vectors</a>
+      <pre>
+
+      </pre>
+    </div>
+
+    <footer>©  2026 António Fonseca </footer>
+
+    <script src="ObjectWithG.js"></script>
+    <script src="sketch.js"></script>
+    <script src="inputs.js"></script>
+  </body>
+</html>
